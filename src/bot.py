@@ -68,6 +68,6 @@ def run():
         elif next_action.action == GameActions.exit_program:
             turn_screen_off()
             logging.info("Max number of games played. Exit program.")
-            sys.exit(1)
+            sys.exit()
 
         time.sleep(2)

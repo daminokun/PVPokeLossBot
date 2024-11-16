@@ -1,6 +1,7 @@
 import logging
 import cv2
 import os
+import threading
 
 from src import constants
 from src import image_service
@@ -27,12 +28,30 @@ def make_decision(template_images: dict[str, cv2.Mat], image_name: str) -> GameA
 
     # Check if any of the image files match the screenshot
     find_image_results: list[tuple[str, FindImageResult]] = []
-    for image_file, img_template in template_images.items():
+
+    # Compare each image in its own thread
+    def compare_image(image_file, img_screenshot, img_template):
         result = image_service.find_image(img_screenshot, img_template)
         if result:
             logging.debug(f"Image {image_file} matches with {result.val * 100}%")
             if result.val > 0.90:
                 find_image_results.append((image_file, result))
+
+    threads = []
+    for image_file, img_template in template_images.items():
+        thread = threading.Thread(target=compare_image, args=(image_file, img_screenshot, img_template))
+        thread.start()
+        threads.append(thread)
+
+    for thread in threads:
+        thread.join()
+
+    # for image_file, img_template in template_images.items():
+    #     result = image_service.find_image(img_screenshot, img_template)
+    #     if result:
+    #         logging.debug(f"Image {image_file} matches with {result.val * 100}%")
+    #         if result.val > 0.90:
+    #             find_image_results.append((image_file, result))
 
     logging.debug("Found images over threshold:")
     logging.debug(find_image_results)
@@ -47,7 +66,7 @@ def analyze_results_and_return_action_with_priority(
         return GameAction()
 
     priority_list = [
-        "max_number_of_games_played_text.",
+        "max_number_of_games_played_text",
         "reward_",
         "start_button_text",
         "select_master",
@@ -73,7 +92,7 @@ def analyze_results_and_return_action(
 ) -> GameAction:
     logging.info(f"Image {image_file} matches with {find_image_result.val * 100}%")
 
-    if image_file.startswith("max_number_of_games_played_text."):
+    if image_file.startswith("max_number_of_games_played_text"):
         return GameAction(action=GameActions.exit_program)
 
     # If ingame return is_ingame with true

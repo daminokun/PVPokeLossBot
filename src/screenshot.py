@@ -12,4 +12,5 @@ def capture_screenshot(filename: str) -> bool:
     else:
         adb_command = f"adb exec-out screencap -p > {filename} 2> /dev/null"
     error_code = os.system(adb_command)
+    # os.system(f"mogrify -resize 25% {filename}")
     return error_code == 0
