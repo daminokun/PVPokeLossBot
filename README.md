@@ -13,12 +13,20 @@ The bot also has a built-in timer that automatically forfeits the game after a c
 
 ## Installation
 
-To use PVPokeLossBot, you will first need to install the required dependencies:
-I created a [venv](https://docs.python.org/3/library/venv.html).
+To use PVPokeLossBot, you will first need to install the required dependencies.
+
+### Create and Activate a Virtual Environment
+
+Using [venv](https://docs.python.org/3/library/venv.html), create a virtual environment to manage dependencies:
 
 ``` bash
 python -m venv venv
 source venv/bin/activate
+```
+
+### Install dependencies
+
+``` bash
 pip install -r requirements.txt
 ```
 
