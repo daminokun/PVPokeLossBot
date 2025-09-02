@@ -9,7 +9,7 @@ from src.adb_checker import check_adb_status, wait_for_device
 from src.game_action import GameActions
 from src.image_decision_maker import make_decision
 from src.image_template_loader import load_image_templates
-from src import screenshot_manager  # or 'screenshot_manger' if that's the filename
+from src import screenshot_manger  # Use the correct filename here!
 
 def run(skip_adb_check: bool = False):
     # Check ADB status before starting the bot (unless skipped)
@@ -46,28 +46,27 @@ def run(skip_adb_check: bool = False):
     game_entered = False
     waiting_for_device = False
 
-            while True:
-                try:
-                    # Save the screenshot and get the filename
-                    screenshot_path = screenshot_manger.save_new_screenshot()  # Also update import to screenshot_manger if needed
-                    if waiting_for_device:
-                        waiting_for_device = False
-                        print()
-                except Exception as e:
-                    if waiting_for_device:
-                        print(".", end="", flush=True)
-                    else:
-                        logging.info("Error capturing screenshot. Waiting until phone is connected.")
-                        waiting_for_device = True
-                    time.sleep(5)
-                    continue
+    while True:
+        try:
+            # Save the screenshot and get the filename
+            screenshot_path = screenshot_manger.save_new_screenshot()
+            if waiting_for_device:
+                waiting_for_device = False
+                print()
+        except Exception as e:
+            if waiting_for_device:
+                print(".", end="", flush=True)
+            else:
+                logging.info("Error capturing screenshot. Waiting until phone is connected.")
+                waiting_for_device = True
+            time.sleep(5)
+            continue
 
         # Use the actual screenshot path for image analysis
         next_action = make_decision(template_images, screenshot_path)
            
         if waiting_for_device:
             waiting_for_device = False
-            # print to jump to the next line after only printing ...... without jumping to next line
             print()
 
         # Check if the timer has run out
@@ -78,8 +77,6 @@ def run(skip_adb_check: bool = False):
             time.sleep(1)
             send_adb_tap(429, 1254)
             time.sleep(1)
-
-        next_action = make_decision(template_images, constants.SCREENSHOT_FILE_NAME)
 
         if next_action.action == GameActions.tap_position:
             # If not ingame reset timer
