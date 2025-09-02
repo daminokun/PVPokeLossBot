@@ -1,10 +1,9 @@
 import logging
 import cv2
 import os
-import threading
+from concurrent.futures import ThreadPoolExecutor
 
-from src import constants
-from src import image_service
+from src import constants, image_service
 from src.find_image_result import FindImageResult
 from src.game_action import GameAction, GameActions
 
@@ -18,99 +17,109 @@ def is_screen_to_attack(image_file: str) -> bool:
 
 
 def make_decision(template_images: dict[str, cv2.Mat], image_name: str) -> GameAction:
-    # Check if the image file exists
     if not os.path.exists(image_name):
-        logging.error(f"Image file {image_name} does not exist.")
-        raise FileNotFoundError
+        logging.error(f"Missing image: {image_name}")
+        raise FileNotFoundError(f"Screenshot file not found: {image_name}")
 
-    # Load the screenshot as an image
     img_screenshot = cv2.imread(image_name, cv2.IMREAD_COLOR)
+    if img_screenshot is None:
+        logging.error(f"Failed to load screenshot: {image_name}")
+        raise ValueError("Screenshot is None — check image path or format")
 
-    # Check if any of the image files match the screenshot
-    find_image_results: list[tuple[str, FindImageResult]] = []
+    logging.debug(f"Screenshot loaded: {image_name}, shape: {img_screenshot.shape}")
+    logging.debug(f"Submitting {len(template_images)} template comparisons...")
 
-    # Compare each image in its own thread
-    def compare_image(image_file, img_screenshot, img_template):
-        result = image_service.find_image(img_screenshot, img_template)
-        if result:
-            logging.debug(f"Image {image_file} matches with {result.val * 100}%")
-            if result.val > 0.90:
-                find_image_results.append((image_file, result))
+    find_image_results = []
 
-    threads = []
-    for image_file, img_template in template_images.items():
-        thread = threading.Thread(target=compare_image, args=(image_file, img_screenshot, img_template))
-        thread.start()
-        threads.append(thread)
+    def compare_image(image_file, img_template):
+        threshold = 0.77
+        if image_file.startswith("forfeit"):
+            threshold = 0.70
 
-    for thread in threads:
-        thread.join()
+        try:
+            result = image_service.find_image_fast(
+                img_screenshot, img_template, threshold, image_file
+            )
+        except Exception as e:
+            logging.error(f"Error in find_image_fast for {image_file}: {e}")
+            return None
 
-    # for image_file, img_template in template_images.items():
-    #     result = image_service.find_image(img_screenshot, img_template)
-    #     if result:
-    #         logging.debug(f"Image {image_file} matches with {result.val * 100}%")
-    #         if result.val > 0.90:
-    #             find_image_results.append((image_file, result))
+        if result and result.val >= threshold:
+            if image_file.startswith("forfeit"):
+                x, y = result.coords
+                if not (380 < y < 800):
+                    logging.debug(f"Skipped forfeit match at {x},{y} — outside valid Y range.")
+                    return None
+            logging.debug(f"Match: {image_file} @ {result.val:.2f} (threshold: {threshold})")
+            return (image_file, result)
 
-    logging.debug("Found images over threshold:")
-    logging.debug(find_image_results)
+        return None
+
+    with ThreadPoolExecutor(max_workers=2) as executor:
+        futures = [
+            executor.submit(compare_image, file, tmpl)
+            for file, tmpl in template_images.items()
+        ]
+        for future in futures:
+            try:
+                match = future.result(timeout=10)  # Prevent hanging
+                if match:
+                    find_image_results.append(match)
+            except Exception as e:
+                logging.error(f"Error in image matching thread: {e}")
+
+    logging.debug(f"Total matches: {len(find_image_results)}")
     return analyze_results_and_return_action_with_priority(find_image_results)
 
 
-def analyze_results_and_return_action_with_priority(
-    find_image_results: list[tuple[str, FindImageResult]]
-) -> GameAction:
-    if len(find_image_results) == 0:
-        logging.debug("No image matches.")
-        return GameAction()
+def analyze_results_and_return_action_with_priority(find_image_results: list[tuple[str, FindImageResult]]) -> GameAction:
+    if not find_image_results:
+        return GameAction(action=None)  # no-op
 
     priority_list = [
         "max_number_of_games_played_text",
+        "claim_",
         "reward_",
         "start_button_text",
         "select_master",
+        "select_great",
         "select_hypa",
-        # TODO: Add other images here
+        "vs",
+        "forfeit",
     ]
 
     for priority_file in priority_list:
-        for result in find_image_results:
-            image_file = result[0]
-            find_image_result = result[1]
+        for image_file, result in find_image_results:
             if image_file.startswith(priority_file):
-                return analyze_results_and_return_action(image_file, find_image_result)
+                action = analyze_results_and_return_action(image_file, result)
+                if action and hasattr(action, "action") and action.action:
+                    return action
 
-    # Handle case where image is not in priority_list
-    # Just use the best matching image
-    max_image_file, max_result = max(find_image_results, key=lambda x: x[1].val)
-    return analyze_results_and_return_action(max_image_file, max_result)
+    # ✅ NEW fallback logic below this line
+    for image_file, result in sorted(find_image_results, key=lambda x: x[1].val, reverse=True):
+        action = analyze_results_and_return_action(image_file, result)
+        if action and action.action:
+            logging.info(f"Falling back to: {image_file} with confidence {result.val:.2f}")
+            return action
+
+    logging.warning("No valid matches found even after fallback.")
+    return GameAction(action=None)
 
 
-def analyze_results_and_return_action(
-    image_file: str, find_image_result: FindImageResult
-) -> GameAction:
-    logging.info(f"Image {image_file} matches with {find_image_result.val * 100}%")
+def analyze_results_and_return_action(image_file: str, result: FindImageResult) -> GameAction:
+    logging.info(f"Selected: {image_file} ({result.val * 100:.2f}%)")
+
+    if image_file.startswith("forfeit"):
+        x, y = result.coords
+        if not (380 < y < 800):
+            logging.warning(f"Rejected forfeit match at Y={y} (must be between 381 and 799)")
+            return GameAction(action=None)
 
     if image_file.startswith("max_number_of_games_played_text"):
         return GameAction(action=GameActions.exit_program)
 
-    # If ingame return is_ingame with true
     if is_ingame(image_file):
+        tap_pos = constants.ATTACK_TAP_POSITION if is_screen_to_attack(image_file) else result.coords
+        return GameAction(action=GameActions.tap_position, position=tap_pos, is_ingame=True)
 
-        # Send tap to attack
-        position_to_tap = find_image_result.coords
-        if is_screen_to_attack(image_file):
-            position_to_tap = constants.ATTACK_TAP_POSITION
-
-        return GameAction(
-            action=GameActions.tap_position,
-            position=position_to_tap,
-            is_ingame=True,
-        )
-    else:
-        # Send an ADB command to tap on the corresponding coordinates
-        return GameAction(
-            action=GameActions.tap_position,
-            position=find_image_result.coords,
-        )
+    return GameAction(action=GameActions.tap_position, position=result.coords)

@@ -1,87 +1,50 @@
-import subprocess
+import os
 import logging
-from typing import Optional
+
+# Optional: configure logging (you can move this to your main script if needed)
+logging.basicConfig(
+    level=logging.INFO,
+    format='[%(asctime)s] %(levelname)s - %(message)s',
+)
 
 
 def send_adb_tap(x: int, y: int) -> bool:
     """
-    Send a tap command to the Android device via ADB.
-    Returns True if the command was successful, False otherwise.
+    Simulates a tap on the screen at the given coordinates using ADB.
+
+    Args:
+        x (int): The x-coordinate.
+        y (int): The y-coordinate.
+
+    Returns:
+        bool: True if the command was successful, False otherwise.
     """
-    try:
-        result = subprocess.run(
-            ["adb", "shell", "input", "tap", str(x), str(y)],
-            capture_output=True,
-            text=True,
-            timeout=10
-        )
-        
-        if result.returncode != 0:
-            logging.error(f"ADB tap command failed: {result.stderr}")
-            return False
-        
-        logging.debug(f"ADB tap sent to coordinates ({x}, {y})")
-        return True
-    
-    except subprocess.TimeoutExpired:
-        logging.error(f"ADB tap command timed out for coordinates ({x}, {y})")
-        return False
-    except (FileNotFoundError, OSError) as e:
-        logging.error(f"ADB tap command failed: {e}")
-        return False
+    adb_command = f"adb shell input tap {x} {y}"
+    logging.info(f"Sending ADB tap to ({x}, {y})")
+    error_code = os.system(adb_command)
+
+    if error_code == 0:
+        logging.info("ADB tap succeeded.")
+    else:
+        logging.error(f"ADB tap failed with error code {error_code}.")
+
+    return error_code == 0
 
 
 def turn_screen_off() -> bool:
     """
-    Turn off the Android device screen using power button keyevent.
-    Returns True if the command was successful, False otherwise.
-    """
-    try:
-        result = subprocess.run(
-            ["adb", "shell", "input", "keyevent", "26"],
-            capture_output=True,
-            text=True,
-            timeout=10
-        )
-        
-        if result.returncode != 0:
-            logging.error(f"ADB screen off command failed: {result.stderr}")
-            return False
-        
-        logging.debug("Screen turned off via ADB")
-        return True
-    
-    except subprocess.TimeoutExpired:
-        logging.error("ADB screen off command timed out")
-        return False
-    except (FileNotFoundError, OSError) as e:
-        logging.error(f"ADB screen off command failed: {e}")
-        return False
+    Simulates the power button (toggles screen on/off) using ADB.
 
+    Returns:
+        bool: True if the command was successful, False otherwise.
+    """
+    adb_command = "adb shell input keyevent 26"
+    logging.info("Sending ADB keyevent 26 (power button toggle)")
+    error_code = os.system(adb_command)
 
-def send_adb_keyevent(keycode: int) -> bool:
-    """
-    Send a keyevent to the Android device via ADB.
-    Returns True if the command was successful, False otherwise.
-    """
-    try:
-        result = subprocess.run(
-            ["adb", "shell", "input", "keyevent", str(keycode)],
-            capture_output=True,
-            text=True,
-            timeout=10
-        )
-        
-        if result.returncode != 0:
-            logging.error(f"ADB keyevent {keycode} command failed: {result.stderr}")
-            return False
-        
-        logging.debug(f"ADB keyevent {keycode} sent")
-        return True
-    
-    except subprocess.TimeoutExpired:
-        logging.error(f"ADB keyevent {keycode} command timed out")
-        return False
-    except (FileNotFoundError, OSError) as e:
-        logging.error(f"ADB keyevent {keycode} command failed: {e}")
-        return False
+    if error_code == 0:
+        logging.info("Screen toggle succeeded.")
+    else:
+        logging.error(f"Screen toggle failed with error code {error_code}.")
+
+    return error_code == 0
