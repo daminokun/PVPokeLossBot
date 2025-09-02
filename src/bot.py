@@ -48,20 +48,19 @@ def run(skip_adb_check: bool = False):
 
     while True:
         # Capture a screenshot and save it to a file
-     try:
-        screenshot_manager.save_new_screenshot()
-        if waiting_for_device:
-            waiting_for_device = False
-            print()  # End the dots line after reconnect
-    except Exception as e:
-        if waiting_for_device:
-            print(".", end="", flush=True)
-        else:
-            logging.info("Error capturing screenshot. Waiting until phone is connected.")
-            waiting_for_device = True
-        time.sleep(5)
-        continue
-
+        try:
+            screenshot_manager.save_new_screenshot()
+            if waiting_for_device:
+                waiting_for_device = False
+                print()  # End the dots line after reconnect
+        except Exception as e:
+            if waiting_for_device:
+                print(".", end="", flush=True)
+            else:
+                logging.info("Error capturing screenshot. Waiting until phone is connected.")
+                waiting_for_device = True
+            time.sleep(5)
+            continue
         if waiting_for_device:
             waiting_for_device = False
             # print to jump to the next line after only printing ...... without jumping to next line
