@@ -58,7 +58,7 @@ def run():
                 forfeit_action
                 and forfeit_action.action == GameActions.tap_position
                 and forfeit_action.is_ingame
-                and 380 < forfeit_action.position[1] < 960  # Only tap if in upper half
+                and forfeit_action.position[1] > 296  # Only tap if in upper half
             ):
                 logging.info(f"Tapping forfeit button at {forfeit_action.position}")
                 send_adb_tap(*forfeit_action.position)
