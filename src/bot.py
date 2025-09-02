@@ -9,7 +9,7 @@ from src.adb_checker import check_adb_status, wait_for_device
 from src.game_action import GameActions
 from src.image_decision_maker import make_decision
 from src.image_template_loader import load_image_templates
-from src import screenshot_manager  # Change to screenshot_manger if that's your actual filename
+from src import screenshot_manager  # or 'screenshot_manger' if that's the filename
 
 def run(skip_adb_check: bool = False):
     # Check ADB status before starting the bot (unless skipped)
