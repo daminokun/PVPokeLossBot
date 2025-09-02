@@ -53,14 +53,14 @@ def run(skip_adb_check: bool = False):
         if waiting_for_device:
             waiting_for_device = False
             print()  # End the dots line after reconnect
-        except Exception as e:
-            if waiting_for_device:
-                print(".", end="", flush=True)
-    else:
-        logging.info("Error capturing screenshot. Waiting until phone is connected.")
-        waiting_for_device = True
-    time.sleep(5)
-    continue
+    except Exception as e:
+        if waiting_for_device:
+            print(".", end="", flush=True)
+        else:
+            logging.info("Error capturing screenshot. Waiting until phone is connected.")
+            waiting_for_device = True
+        time.sleep(5)
+        continue
 
         if waiting_for_device:
             waiting_for_device = False
