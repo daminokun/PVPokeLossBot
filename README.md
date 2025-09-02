@@ -21,7 +21,7 @@ Using [venv](https://docs.python.org/3/library/venv.html), create a virtual envi
 
 ``` bash
 python -m venv venv
-source venv/bin/activate
+venv/scripts/activate
 ```
 
 ### Install dependencies
@@ -31,22 +31,22 @@ pip install -r requirements.txt
 ```
 ## Add ADB to Your System PATH
 
-    Locate the adb folder in the extracted folder (platform-tools).
-    Copy the path to the folder (e.g., C:\Users\<YourUser>\Downloads\PVPokeLossBot-dev\platform-tools).
+Locate the adb folder in the extracted folder (platform-tools).
+Copy the path to the folder (e.g., C:\Users\<YourUser>\Downloads\PVPokeLossBot-dev\platform-tools).
 
 On Windows:
 
-    Search “Edit the system environment variables” → Open “Environment Variables”.
-    Under “System variables”, find and select Path, then click “Edit”.
-    Click “New” and paste the path to your platform-tools folder.
-    Click OK to save and restart your terminal.
+Search “Edit the system environment variables” → Open “Environment Variables”.
+Under “System variables”, find and select Path, then click “Edit”.
+Click “New” and paste the path to your platform-tools folder.
+Click OK to save and restart your terminal.
 
 ## Usage
 
 Make sure you are in your venv if you used one.
 
 ``` bash
-source venv/bin/activate
+venv/scripts/activate
 ```
 
 The bot automatically checks that ADB (Android Debug Bridge) is properly installed and can connect to your device before starting. Ensure your Android device is connected via USB with USB debugging enabled.
