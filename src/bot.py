@@ -9,7 +9,7 @@ from src.adb_checker import check_adb_status, wait_for_device
 from src.game_action import GameActions
 from src.image_decision_maker import make_decision
 from src.image_template_loader import load_image_templates
-
+from src import screenshot_manager  # or 'screenshot_manger' if that's the filename
 
 def run(skip_adb_check: bool = False):
     # Check ADB status before starting the bot (unless skipped)
@@ -48,18 +48,19 @@ def run(skip_adb_check: bool = False):
 
     while True:
         # Capture a screenshot and save it to a file
-        if not screenshot.capture_screenshot(constants.SCREENSHOT_FILE_NAME):
-            if waiting_for_device:
-                print(".", end="", flush=True)
-            else:
-                logging.info(
-                    "Error capturing screenshot. Waiting until phone is connected."
-                )
-                waiting_for_device = True
-
-            # sys.exit(1)
-            time.sleep(5)
-            continue
+     try:
+    screenshot_manager.save_new_screenshot()
+    if waiting_for_device:
+        waiting_for_device = False
+        print()  # End the dots line after reconnect
+except Exception as e:
+    if waiting_for_device:
+        print(".", end="", flush=True)
+    else:
+        logging.info("Error capturing screenshot. Waiting until phone is connected.")
+        waiting_for_device = True
+    time.sleep(5)
+    continue
 
         if waiting_for_device:
             waiting_for_device = False
