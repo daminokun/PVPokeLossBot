@@ -46,21 +46,21 @@ def run(skip_adb_check: bool = False):
     game_entered = False
     waiting_for_device = False
 
-    while True:
-        try:
-            # Save the screenshot and get the filename
-            screenshot_path = screenshot_manger.save_new_screenshot()  # Also update import to screenshot_manger if needed
-            if waiting_for_device:
-                waiting_for_device = False
-                print()
-        except Exception as e:
-            if waiting_for_device:
-                print(".", end="", flush=True)
-            else:
-                logging.info("Error capturing screenshot. Waiting until phone is connected.")
-                waiting_for_device = True
-            time.sleep(5)
-            continue
+while True:
+    try:
+        # Save the screenshot and get the filename
+        screenshot_path = screenshot_manger.save_new_screenshot()  # Also update import to screenshot_manger if needed
+        if waiting_for_device:
+            waiting_for_device = False
+            print()
+    except Exception as e:
+        if waiting_for_device:
+            print(".", end="", flush=True)
+        else:
+            logging.info("Error capturing screenshot. Waiting until phone is connected.")
+            waiting_for_device = True
+        time.sleep(5)
+        continue
 
         # Use the actual screenshot path for image analysis
         next_action = make_decision(template_images, screenshot_path)
