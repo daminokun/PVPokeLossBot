@@ -33,11 +33,11 @@ def save_new_screenshot():
     directory = os.getcwd()
     limit_screenshots(directory, max_count=5)
     new_filename = next_screenshot_filename(directory)
-    # Use adb to pull screenshot from device to current directory
     os.system('adb shell screencap -p /sdcard/screenshot.png')
     os.system(f'adb pull /sdcard/screenshot.png "{new_filename}"')
     os.system('adb shell rm /sdcard/screenshot.png')
     print(f"Saved screenshot: {new_filename}")
-
+    return new_filename  # <-- Add this line
+    
 # Usage:
 # Call save_new_screenshot() whenever you want to save a screenshot
