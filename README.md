@@ -38,6 +38,8 @@ Make sure you are in your venv if you used one.
 source venv/bin/activate
 ```
 
+The bot automatically checks that ADB (Android Debug Bridge) is properly installed and can connect to your device before starting. Ensure your Android device is connected via USB with USB debugging enabled.
+
 To run the bot, you can use the following command:
 
 ``` bash
@@ -49,6 +51,14 @@ Run it with `--verbose` to get more output.
 ``` bash
 python main.py --verbose
 ```
+
+For advanced users, you can skip the automatic ADB connectivity check with:
+
+``` bash
+python main.py --skip-adb-check
+```
+
+**Note**: Only use `--skip-adb-check` if you're sure ADB is working properly, as the bot will fail if ADB commands don't work.
 
 You can also configure the bot's settings by editing the `bot.py` file.
 For example, you can adjust the time the bot will stay in the game before forfeiting.

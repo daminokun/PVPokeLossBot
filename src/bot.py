@@ -11,25 +11,29 @@ from src.image_decision_maker import make_decision
 from src.image_template_loader import load_image_templates
 
 
-def run():
-    # Check ADB status before starting the bot
-    logging.info("Checking ADB status...")
-    is_ready, status_message = check_adb_status()
-    
-    if not is_ready:
-        logging.error(f"ADB is not ready: {status_message}")
-        logging.info("Waiting for ADB device to become available...")
+def run(skip_adb_check: bool = False):
+    # Check ADB status before starting the bot (unless skipped)
+    if not skip_adb_check:
+        logging.info("Checking ADB status...")
+        is_ready, status_message = check_adb_status()
         
-        if not wait_for_device(timeout_seconds=30):
-            logging.error("ADB device did not become available within 30 seconds.")
-            logging.error("Please ensure:")
-            logging.error("1. ADB (Android Debug Bridge) is installed")
-            logging.error("2. Your Android device is connected via USB")
-            logging.error("3. USB debugging is enabled on your device")
-            logging.error("4. You have authorized the USB debugging connection")
-            sys.exit(1)
+        if not is_ready:
+            logging.error(f"ADB is not ready: {status_message}")
+            logging.info("Waiting for ADB device to become available...")
+            
+            if not wait_for_device(timeout_seconds=30):
+                logging.error("ADB device did not become available within 30 seconds.")
+                logging.error("Please ensure:")
+                logging.error("1. ADB (Android Debug Bridge) is installed")
+                logging.error("2. Your Android device is connected via USB")
+                logging.error("3. USB debugging is enabled on your device")
+                logging.error("4. You have authorized the USB debugging connection")
+                logging.error("Tip: Use --skip-adb-check to bypass this check (advanced users only)")
+                sys.exit(1)
+        else:
+            logging.info(status_message)
     else:
-        logging.info(status_message)
+        logging.warning("Skipping ADB connectivity check. Ensure ADB is working manually.")
 
     # Time the bot will stay in game until it forfeits
     time_to_stay_in_game = 5
