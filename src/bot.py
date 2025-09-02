@@ -46,13 +46,13 @@ def run(skip_adb_check: bool = False):
     game_entered = False
     waiting_for_device = False
 
-    while True:
-        # Capture a screenshot and save it to a file
+       while True:
         try:
-            screenshot_manager.save_new_screenshot()
+            # Save the screenshot and get the filename
+            screenshot_path = screenshot_manger.save_new_screenshot()  # Also update import to screenshot_manger if needed
             if waiting_for_device:
                 waiting_for_device = False
-                print()  # End the dots line after reconnect
+                print()
         except Exception as e:
             if waiting_for_device:
                 print(".", end="", flush=True)
@@ -61,6 +61,10 @@ def run(skip_adb_check: bool = False):
                 waiting_for_device = True
             time.sleep(5)
             continue
+
+        # Use the actual screenshot path for image analysis
+        next_action = make_decision(template_images, screenshot_path)
+           
         if waiting_for_device:
             waiting_for_device = False
             # print to jump to the next line after only printing ...... without jumping to next line
