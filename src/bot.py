@@ -46,7 +46,7 @@ def run(skip_adb_check: bool = False):
     game_entered = False
     waiting_for_device = False
 
-       while True:
+    while True:
         try:
             # Save the screenshot and get the filename
             screenshot_path = screenshot_manger.save_new_screenshot()  # Also update import to screenshot_manger if needed
