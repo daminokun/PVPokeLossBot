@@ -74,8 +74,8 @@ def run(skip_adb_check: bool = False):
         if game_entered and elapsed_time > time_to_stay_in_game:
             logging.info("Timer has run out. Forfeit the game.")
            game_action = make_decision(template_images, current_screenshot)
-if game_action.action == GameActions.tap_position:
-    send_adb_tap(*game_action.position)
+        if game_action.action == GameActions.tap_position:
+            send_adb_tap(*game_action.position)
 
         if next_action.action == GameActions.tap_position:
             # If not ingame reset timer
