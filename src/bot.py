@@ -49,10 +49,10 @@ def run(skip_adb_check: bool = False):
     while True:
         # Capture a screenshot and save it to a file
      try:
-    screenshot_manager.save_new_screenshot()
-    if waiting_for_device:
-        waiting_for_device = False
-        print()  # End the dots line after reconnect
+        screenshot_manager.save_new_screenshot()
+        if waiting_for_device:
+            waiting_for_device = False
+            print()  # End the dots line after reconnect
 except Exception as e:
     if waiting_for_device:
         print(".", end="", flush=True)
