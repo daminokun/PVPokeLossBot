@@ -73,7 +73,7 @@ def run(skip_adb_check: bool = False):
         elapsed_time = time.time() - start_time
         if game_entered and elapsed_time > time_to_stay_in_game:
             logging.info("Timer has run out. Forfeit the game.")
-           game_action = make_decision(template_images, current_screenshot)
+            game_action = make_decision(template_images, current_screenshot)
         if game_action.action == GameActions.tap_position:
             send_adb_tap(*game_action.position)
 
