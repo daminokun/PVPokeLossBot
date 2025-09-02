@@ -16,7 +16,7 @@ def hash_image(path):
     with open(path, 'rb') as f:
         return hashlib.md5(f.read()).hexdigest()
 
-def run():
+def run(skip_adb_check=False):
     time_to_stay_in_game = 3
     start_time = time.time()
     template_images = load_image_templates()
