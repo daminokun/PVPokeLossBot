@@ -136,6 +136,20 @@ python convert-to-greyscale.py
 If you are using the bot in a different language than the one provided in the template images, you can contribute by adding new images for different languages.
 You can create a pull request with the new images and the corresponding language identifier in the file name, for example, `start_button_text2.fr.png` for French.
 
+## Adjust Forfeit Delay
+Find this part in analyze_results_and_return_action (or wherever you handle the forfeit template):
+
+``` bash
+if image_file.startswith("forfeit"):  # or your specific template name
+    return GameAction(
+        action=GameActions.tap_position,
+        position=find_image_result.coords,
+        delay_before_tap=3.0  # <--- CHANGE THIS VALUE
+    )
+```
+To change the delay:
+Change 3.0 to any number of seconds you want (e.g., 5.0 for 5 seconds, 1.5 for 1.5 seconds).
+
 ## Known Issues
 
 Stuck after claiming Encounter reward since the bot is not made to catch pokemon
