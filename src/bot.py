@@ -7,7 +7,7 @@ from src import constants
 from src import screenshot
 from src.adb_commands import send_adb_tap, turn_screen_off
 from src.game_action import GameActions
-from src.image_decision_maker import make_decision
+from src.image_decision_maker import find_images_over_threshold
 from src.image_template_loader import load_image_templates
 
 last_hash = None
@@ -17,6 +17,7 @@ def hash_image(path):
         return hashlib.md5(f.read()).hexdigest()
 
 def run(skip_adb_check=False):
+    global last_hash 
     time_to_stay_in_game = 3
     start_time = time.time()
     template_images = load_image_templates()
@@ -37,57 +38,45 @@ def run(skip_adb_check=False):
 
         if waiting_for_device:
             waiting_for_device = False
-            print()
+            new_hash = hash_image(constants.SCREENSHOT_FILE_NAME)
+            if new_hash == last_hash:
+                time.sleep(2.5)
+                continue
+            last_hash = new_hash
 
-        # ✅ Frame-skip: skip processing if screenshot hasn't changed
-        global last_hash
+        # Frame-skip: skip processing if screenshot hasn't changed
         new_hash = hash_image(constants.SCREENSHOT_FILE_NAME)
+        logging.debug(f"Screenshot hash: {new_hash}")
         if new_hash == last_hash:
-            time.sleep(2.5)  # match normal sleep to avoid high CPU
+            time.sleep(2.5)
             continue
         last_hash = new_hash
 
-        # Timer check
-        elapsed_time = time.time() - start_time
-        if game_entered and elapsed_time > time_to_stay_in_game:
-            logging.info("Timer has run out. Looking for forfeit button.")
+        # --- NEW LOGIC: Pick best match with y > 296, or second best if top is not valid ---
+        logging.info("Running image matching...")
 
-            forfeit_action = make_decision(template_images, constants.SCREENSHOT_FILE_NAME)
+        # Get all matches above threshold (assuming this returns sorted list of (img_name, FindImageResult))
+        matches = find_images_over_threshold(template_images, constants.SCREENSHOT_FILE_NAME)
+        logging.info(f"Found images over threshold: {matches}")
 
-            if (
-                forfeit_action
-                and forfeit_action.action == GameActions.tap_position
-                and forfeit_action.is_ingame
-                and forfeit_action.position[1] > 296  # Only tap if in upper half
-            ):
-                logging.info(f"Tapping forfeit button at {forfeit_action.position}")
-                send_adb_tap(*forfeit_action.position)
-                time.sleep(1)
-            else:
-                logging.warning("Forfeit button not found in upper half of screen. Skipping first tap.")
+        tapped = False
+        for img_name, result in matches:
+            if result.coords[1] > 296:
+                logging.info(f"Tapping {img_name} at {result.coords} (confidence {result.val*100:.2f}%)")
+                send_adb_tap(result.coords[0], result.coords[1])
+                tapped = True
+                break  # only tap the best match with y > 296
 
-            # Always send second tap regardless
-            send_adb_tap(429, 1254)
-            time.sleep(1)
+        if not tapped and matches:
+            # log a warning if no valid taps found
+            logging.info(f"No matches with y > 296 found; skipping tap.")
 
-        # Image match decision
-        next_action = make_decision(template_images, constants.SCREENSHOT_FILE_NAME)
+        # Exit logic if needed
+        # (implement your exit logic here as before)
+        # Example:
+        # if some_exit_condition:
+        #     turn_screen_off()
+        #     logging.info("Max number of games played. Exit program.")
+        #     sys.exit()
 
-        if next_action and next_action.action == GameActions.tap_position:
-            if next_action.is_ingame:
-                if not game_entered:
-                    start_time = time.time()
-                    game_entered = True
-            else:
-                start_time = time.time()
-                game_entered = False
-
-            send_adb_tap(next_action.position[0], next_action.position[1])
-
-        elif next_action and next_action.action == GameActions.exit_program:
-            turn_screen_off()
-            logging.info("Max number of games played. Exit program.")
-            sys.exit()
-
-        # ✅ Main loop sleep (slower cycle = lower CPU)
         time.sleep(1.5)
