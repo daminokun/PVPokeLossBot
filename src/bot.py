@@ -62,6 +62,12 @@ def run(skip_adb_check=False):
         tapped = False
         for img_name, result in matches:
             if result.coords[1] > 296:
+                # Use GameAction decision for delay
+                from src.image_decision_maker import analyze_results_and_return_action
+                action = analyze_results_and_return_action(img_name, result)
+                if getattr(action, "delay_before_tap", 0.0) > 0:
+                    logging.info(f"Waiting {action.delay_before_tap} seconds before tapping for '{img_name}'...")
+                    time.sleep(action.delay_before_tap)
                 logging.info(f"Tapping {img_name} at {result.coords} (confidence {result.val*100:.2f}%)")
                 send_adb_tap(result.coords[0], result.coords[1])
                 tapped = True

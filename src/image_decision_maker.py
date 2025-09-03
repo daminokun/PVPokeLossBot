@@ -90,6 +90,14 @@ def analyze_results_and_return_action(
 
     if image_file.startswith("max_number_of_games_played_text"):
         return GameAction(action=GameActions.exit_program)
+    
+# Add: Forfeit match logic
+    if image_file.startswith("forfeit"):  # Change to your forfeit template prefix
+        return GameAction(
+            action=GameActions.tap_position,
+            position=find_image_result.coords,
+            delay_before_tap=3.0  # Wait 3 seconds before tapping
+        )
 
     # If ingame return is_ingame with true
     if is_ingame(image_file):
