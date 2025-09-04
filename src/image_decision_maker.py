@@ -34,9 +34,16 @@ def make_decision(template_images: dict[str, cv2.Mat], image_name: str) -> GameA
         result = image_service.find_image(img_screenshot, img_template)
         if result:
             logging.debug(f"Image {image_file} matches with {result.val * 100}%")
-            if result.val > 0.90:
-                find_image_results.append((image_file, result))
-
+            if image_file.startswith("forfeit"):
+                template_h, template_w = img_template.shape[:2]
+                match_w = getattr(result, "width", None)
+                match_h = getattr(result, "height", None)
+                if match_w is not None and match_h is not None and (match_w == template_w and match_h == template_h) and result.val > 0.90:
+                        find_image_results.append((image_file, result))
+                else:
+                    if result.val > 0.90:
+                        find_image_results.append((image_file, result))
+                        
     threads = []
     for image_file, img_template in template_images.items():
         thread = threading.Thread(target=compare_image, args=(image_file, img_screenshot, img_template))
@@ -50,7 +57,7 @@ def make_decision(template_images: dict[str, cv2.Mat], image_name: str) -> GameA
     logging.debug(find_image_results)
     return analyze_results_and_return_action_with_priority(find_image_results)
 
-
+    #priority option
 def analyze_results_and_return_action_with_priority(
     find_image_results: list[tuple[str, FindImageResult]]
 ) -> GameAction:
@@ -83,6 +90,7 @@ def analyze_results_and_return_action_with_priority(
         logging.info("No matches with y > 296 found; skipping tap.")
         return GameAction()  # No action
 
+    #image analyze
 def analyze_results_and_return_action(
     image_file: str, find_image_result: FindImageResult
 ) -> GameAction:
@@ -91,12 +99,12 @@ def analyze_results_and_return_action(
     if image_file.startswith("max_number_of_games_played_text"):
         return GameAction(action=GameActions.exit_program)
     
-# Add: Forfeit match logic
+    # Add: Forfeit match logic
     if image_file.startswith("forfeit"):  # Change to your forfeit template prefix
         return GameAction(
             action=GameActions.tap_position,
             position=find_image_result.coords,
-            delay_before_tap=3.0  # Wait 3 seconds before tapping
+            delay_before_tap=5.0  # Wait 5 seconds before tapping
         )
 
     # If ingame return is_ingame with true
@@ -118,6 +126,8 @@ def analyze_results_and_return_action(
             action=GameActions.tap_position,
             position=find_image_result.coords,
         )
+
+    #threshold for image match
 def find_images_over_threshold(template_images: dict[str, cv2.Mat], screenshot_file: str, threshold: float = 0.90) -> list[tuple[str, FindImageResult]]:
     """
     Finds all template images that match the screenshot above the given threshold.
