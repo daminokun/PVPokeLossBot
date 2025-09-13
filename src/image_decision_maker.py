@@ -66,21 +66,23 @@ def analyze_results_and_return_action_with_priority(
         return GameAction()
 
     priority_list = [
-        
         "max_number_of_games_played_text",
         "reward_",
         "start_",
         "select_master",
         "select_hypa",
+        "start_button_yes",
+        "welcome_to_gbl_button_text",
+        "Yes",
         # TODO: Add other images here
     ]
 
-    for priority_file in priority_list:
-        for result in find_image_results:
-            image_file = result[0]
-            find_image_result = result[1]
-            if image_file.startswith(priority_file):
-                return analyze_results_and_return_action(image_file, find_image_result)
+    # For each priority prefix, find the best match by confidence
+    for priority_prefix in priority_list:
+        matches = [r for r in find_image_results if r[0].startswith(priority_prefix)]
+        if matches:
+            best_file, best_result = max(matches, key=lambda x: x[1].val)
+            return analyze_results_and_return_action(best_file, best_result
 
     # PATCH: Only consider matches with y > 296
     filtered_results = [r for r in find_image_results if r[1].coords[1] > 296]
