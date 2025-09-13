@@ -82,7 +82,7 @@ def analyze_results_and_return_action_with_priority(
         matches = [r for r in find_image_results if r[0].startswith(priority_prefix)]
         if matches:
             best_file, best_result = max(matches, key=lambda x: x[1].val)
-            return analyze_results_and_return_action(best_file, best_result
+            return analyze_results_and_return_action(best_file, best_result)
 
     # PATCH: Only consider matches with y > 296
     filtered_results = [r for r in find_image_results if r[1].coords[1] > 296]
