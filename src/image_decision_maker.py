@@ -77,11 +77,13 @@ def analyze_results_and_return_action_with_priority(
         # TODO: Add other images here
     ]
 
-    # For each priority prefix, find the best match by confidence
+    # For each prefix (in order), find the highest-confidence match for that prefix and return it immediately
     for priority_prefix in priority_list:
         matches = [r for r in find_image_results if r[0].startswith(priority_prefix)]
         if matches:
+            # Pick highest confidence among matches
             best_file, best_result = max(matches, key=lambda x: x[1].val)
+            logging.info(f"Priority match found: {best_file} with confidence {best_result.val}")
             return analyze_results_and_return_action(best_file, best_result)
 
     # PATCH: Only consider matches with y > 296
